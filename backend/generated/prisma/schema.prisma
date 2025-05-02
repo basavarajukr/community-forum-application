@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String?
+  forums    Forum[]
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+}
+
+model Forum {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  tags        Tag[]      @relation("ForumTags") // Use Tag[] for a relation to Tag model
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id])
+  comments    Comment[]
+  ForumTag    ForumTag[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+  userId    Int
+  forumId   Int
+  user      User     @relation(fields: [userId], references: [id])
+  forum     Forum    @relation(fields: [forumId], references: [id])
+}
+
+model Tag {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique
+  forums   Forum[]    @relation("ForumTags") // Relation to Forum
+  ForumTag ForumTag[]
+}
+
+model ForumTag {
+  forumId Int
+  tagId   Int
+  forum   Forum @relation(fields: [forumId], references: [id])
+  tag     Tag   @relation(fields: [tagId], references: [id])
+
+  @@id([forumId, tagId]) // Composite primary key for the relation
+}
